@@ -1,0 +1,59 @@
+plugins {
+    id "org.springframework.boot" version "2.2.0.RC1" apply false
+    id "io.spring.dependency-management" version "1.0.8.RELEASE" apply false
+}
+
+group = "de.niken.apse"
+version = "0.0.1-SNAPSHOT"
+
+subprojects {
+    apply plugin:  "org.springframework.boot"
+    apply plugin:  "io.spring.dependency-management"
+    apply plugin:  "java"
+    
+
+    sourceCompatibility = "11"
+
+    repositories {
+        mavenCentral()
+        maven { url "https://repo.spring.io/milestone" }
+    }
+
+    dependencies {
+        compileOnly "org.projectlombok:lombok:1.18.10"
+        annotationProcessor "org.projectlombok:lombok:1.18.10"
+
+        testImplementation('org.springframework.boot:spring-boot-starter-test') {
+            exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        }
+    }
+}
+
+project(":data") {
+    apply plugin: "java-library"
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    }
+}
+
+project(":notifier") {
+    dependencies {
+        implementation project(":data")
+
+        implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    }
+}
+
+project(":demo") {
+    dependencies {
+        implementation project(":data")
+        implementation project(":notifier")
+
+        implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+        testImplementation 'io.projectreactor:reactor-test'
+    }
+}
