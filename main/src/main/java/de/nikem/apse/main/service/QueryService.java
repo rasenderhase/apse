@@ -23,7 +23,9 @@ public class QueryService {
 
     public Flux<EventEntity> processQueries() {
         return eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock))
+                .log()
                 .map(this::createEvent)
+                .log()
                 .flatMap(this::persist);
     }
 
@@ -45,7 +47,9 @@ public class QueryService {
         EventDefinitionEntity eventDefinition = tuple.getT1();
         EventEntity event = tuple.getT2();
         return eventDefinitionRepository.save(eventDefinition)
-                .then(eventRepository.save(event));
+                .log()
+                .then(eventRepository.save(event))
+                .log();
     }
 
     private void updateToNextEventDefinition(EventDefinitionEntity eventDefinition) {

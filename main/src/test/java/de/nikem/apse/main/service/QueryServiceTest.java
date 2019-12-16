@@ -56,7 +56,11 @@ class QueryServiceTest {
         when(eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock)))
                 .thenReturn(Flux.just(eventDefinitionEntity));
         when(eventDefinitionRepository.save(eventDefinitionEntity)).thenReturn(Mono.just(eventDefinitionEntity));
-        when(eventRepository.save(any())).then(i -> Mono.just(i.getArgument(0)));
+        when(eventRepository.save(any())).then(i -> {
+            final EventEntity event = i.getArgument(0);
+            event.setId("4711");
+            return Mono.just(event);
+        });
     }
 
     @org.junit.jupiter.api.Test
