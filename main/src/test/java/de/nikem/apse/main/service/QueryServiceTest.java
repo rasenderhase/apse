@@ -4,16 +4,18 @@ import de.nikem.apse.data.entitiy.EventDefinitionEntity;
 import de.nikem.apse.data.entitiy.EventEntity;
 import de.nikem.apse.data.repository.EventDefinitionRepository;
 import de.nikem.apse.data.repository.EventRepository;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.*;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 class QueryServiceTest {
@@ -63,16 +65,16 @@ class QueryServiceTest {
 
     @org.junit.jupiter.api.Test
     void processQueries() {
-        queryService.processQueries().subscribe();
+        final Flux<EventEntity> eventEntityFlux = queryService.processQueries();
+        //Consume the Flux
+        Collection<EventEntity> events = eventEntityFlux.toStream().collect(Collectors.toList());
 
-        ArgumentCaptor<EventDefinitionEntity> definitionCaptor = ArgumentCaptor.forClass(EventDefinitionEntity.class);
-        verify(eventDefinitionRepository).save(definitionCaptor.capture());
-        final EventDefinitionEntity capturedDefinition = definitionCaptor.getValue();
-        MatcherAssert.assertThat(capturedDefinition, Matchers.hasProperty("eventName", Matchers.is("Kick")));
+        verify(eventDefinitionRepository).save(eventDefinitionEntity);
+        assertThat(eventDefinitionEntity, hasProperty("eventName", is("Kick")));
 
-        ArgumentCaptor<EventEntity> eventCaptor = ArgumentCaptor.forClass(EventEntity.class);
-        verify(eventRepository).save(eventCaptor.capture());
-        final EventEntity capturedEvent = eventCaptor.capture();
-        MatcherAssert.assertThat(capturedDefinition, Matchers.hasProperty("eventName", Matchers.is("Kick")));
+        verify(eventRepository).save(any());
+        assertThat(events, hasSize(1));
+        EventEntity event = events.stream().findFirst().orElseThrow();
+        assertThat(event, hasProperty("eventName", is("Kick")));
     }
 }
