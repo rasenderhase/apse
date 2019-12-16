@@ -29,8 +29,8 @@ public class EventEntity {
     private LocalDateTime startDateTime;
     private ZoneId zoneId;
 
-    private Duration durationQueryBeforeEvent;
-    private Duration durationDecisionBeforeEvent;
+    private LocalDateTime queryDateTime;
+    private LocalDateTime decisionDateTime;
 
     private int minimumAttendees;
 

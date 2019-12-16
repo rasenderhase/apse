@@ -26,7 +26,7 @@ It's specialized to
 ## Process
 
 1. define event (start date, query duration, decision duration, minimum number of participants, attendees)
-2. repeatedly (using a scheduler) select all eventDefinitions with `startDateTime - durationQueryBeforeEvent` in the past.
+2. repeatedly (using a scheduler) select all eventDefinitions with `queryDateTime` (`= startDateTime - durationQueryBeforeEvent`) in the past.
 3. for each selected event definition
     1. check if event with same `startDateTime` already exists
     2. create events with `startDateTime`, `attendees`, `eventStatus = INVITATION` and all other values of the definition

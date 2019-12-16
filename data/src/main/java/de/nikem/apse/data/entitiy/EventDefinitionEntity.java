@@ -28,6 +28,9 @@ public class EventDefinitionEntity {
     private Duration durationQueryBeforeEvent;
     private Duration durationDecisionBeforeEvent;
 
+    private LocalDateTime queryDateTime;
+    private LocalDateTime decisionDateTime;
+
     private int minimumAttendees;
 
     @Builder.Default

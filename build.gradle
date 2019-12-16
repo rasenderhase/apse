@@ -33,7 +33,7 @@ project(":data") {
     apply plugin: "java-library"
 
     dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+        api 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
     }
 }
 
@@ -55,5 +55,15 @@ project(":demo") {
         implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
         testImplementation 'io.projectreactor:reactor-test'
+    }
+}
+
+project(":main") {
+    dependencies {
+        implementation project(":data")
+
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+        testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
     }
 }
