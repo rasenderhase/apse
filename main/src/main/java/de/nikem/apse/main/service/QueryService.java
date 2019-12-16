@@ -6,6 +6,8 @@ import de.nikem.apse.data.repository.EventDefinitionRepository;
 import de.nikem.apse.data.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -19,10 +21,10 @@ public class QueryService {
     private final EventDefinitionRepository eventDefinitionRepository;
     private final EventRepository eventRepository;
 
-    public void processQueries() {
-        eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock))
+    public Flux<EventEntity> processQueries() {
+        return eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock))
                 .map(this::createEvent)
-                .subscribe(this::persist);
+                .flatMap(this::persist);
     }
 
     private Tuple2<EventDefinitionEntity, EventEntity> createEvent(EventDefinitionEntity eventDefinition) {
@@ -35,17 +37,15 @@ public class QueryService {
                 .startDateTime(eventDefinition.getStartDateTime())
                 .zoneId(eventDefinition.getZoneId())
                 .build();
+        updateToNextEventDefinition(eventDefinition);
         return Tuples.of(eventDefinition, event);
     }
 
-    private void persist(Tuple2<EventDefinitionEntity, EventEntity> tuple) {
+    private Mono<EventEntity> persist(Tuple2<EventDefinitionEntity, EventEntity> tuple) {
         EventDefinitionEntity eventDefinition = tuple.getT1();
         EventEntity event = tuple.getT2();
-
-        updateToNextEventDefinition(eventDefinition);
-        eventDefinitionRepository.save(eventDefinition);
-
-        eventRepository.save(event);
+        return eventDefinitionRepository.save(eventDefinition)
+                .then(eventRepository.save(event));
     }
 
     private void updateToNextEventDefinition(EventDefinitionEntity eventDefinition) {

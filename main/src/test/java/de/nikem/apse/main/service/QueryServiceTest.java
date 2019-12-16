@@ -11,10 +11,12 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class QueryServiceTest {
 
@@ -51,21 +53,23 @@ class QueryServiceTest {
                 .zoneId(ZoneId.of("Europe/Berlin"))
                 .build();
 
-        Mockito.when(eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock)))
+        when(eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock)))
                 .thenReturn(Flux.just(eventDefinitionEntity));
+        when(eventDefinitionRepository.save(eventDefinitionEntity)).thenReturn(Mono.just(eventDefinitionEntity));
+        when(eventRepository.save(any())).then(i -> Mono.just(i.getArgument(0)));
     }
 
     @org.junit.jupiter.api.Test
     void processQueries() {
-        queryService.processQueries();
+        queryService.processQueries().subscribe();
 
         ArgumentCaptor<EventDefinitionEntity> definitionCaptor = ArgumentCaptor.forClass(EventDefinitionEntity.class);
-        Mockito.verify(eventDefinitionRepository).save(definitionCaptor.capture());
+        verify(eventDefinitionRepository).save(definitionCaptor.capture());
         final EventDefinitionEntity capturedDefinition = definitionCaptor.getValue();
         MatcherAssert.assertThat(capturedDefinition, Matchers.hasProperty("eventName", Matchers.is("Kick")));
 
         ArgumentCaptor<EventEntity> eventCaptor = ArgumentCaptor.forClass(EventEntity.class);
-        Mockito.verify(eventRepository).save(eventCaptor.capture());
+        verify(eventRepository).save(eventCaptor.capture());
         final EventEntity capturedEvent = eventCaptor.capture();
         MatcherAssert.assertThat(capturedDefinition, Matchers.hasProperty("eventName", Matchers.is("Kick")));
     }
