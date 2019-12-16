@@ -8,14 +8,12 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.*;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class QueryServiceTest {
