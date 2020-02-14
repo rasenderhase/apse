@@ -1,7 +1,10 @@
 package de.nikem.apse.main.service;
 
+import de.nikem.apse.data.entitiy.EventAttendeeEntity;
 import de.nikem.apse.data.entitiy.EventDefinitionEntity;
 import de.nikem.apse.data.entitiy.EventEntity;
+import de.nikem.apse.data.enums.AttendeeStatus;
+import de.nikem.apse.data.enums.EventStatus;
 import de.nikem.apse.data.repository.EventDefinitionRepository;
 import de.nikem.apse.data.repository.EventRepository;
 import org.mockito.Mock;
@@ -10,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -51,6 +55,18 @@ class QueryServiceTest {
                 .queryDateTime(testLocalDateTime("2019-12-17T08:00:00.00Z"))
                 .startDateTime(testLocalDateTime("2019-12-17T20:00:00.00Z"))
                 .zoneId(ZoneId.of("Europe/Berlin"))
+                .attendeeDefinitions(Arrays.asList(EventAttendeeEntity.builder()
+                                .active(true)
+                                .email("rea@knees.de")
+                                .build(),
+                        EventAttendeeEntity.builder()
+                                .active(true)
+                                .email("tom@knees.de")
+                                .build(),
+                        EventAttendeeEntity.builder()
+                                .active(true)
+                                .email("ben@knees.de")
+                                .build()))
                 .build();
 
         when(eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock)))
@@ -76,5 +92,12 @@ class QueryServiceTest {
         assertThat(events, hasSize(1));
         EventEntity event = events.stream().findFirst().orElseThrow();
         assertThat(event, hasProperty("eventName", is("Kick")));
+        assertThat(event, hasProperty("eventStatus", is(EventStatus.INVITATION)));
+        assertThat(event, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
+
+        final Collection<EventAttendeeEntity> attendees = event.getAttendees();
+        assertThat(attendees, hasSize(3));
+        attendees.forEach(attendee -> assertThat(attendee, hasProperty("attendeeStatus", is(AttendeeStatus.IDLE))));
+        assertThat("ben is an attendee", attendees.stream().anyMatch(a -> a.getEmail().equals("ben@knees.de")), is(true));
     }
 }

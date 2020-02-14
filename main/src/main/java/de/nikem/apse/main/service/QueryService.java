@@ -1,5 +1,6 @@
 package de.nikem.apse.main.service;
 
+import de.nikem.apse.data.entitiy.EventAttendeeEntity;
 import de.nikem.apse.data.entitiy.EventDefinitionEntity;
 import de.nikem.apse.data.entitiy.EventEntity;
 import de.nikem.apse.data.repository.EventDefinitionRepository;
@@ -13,6 +14,7 @@ import reactor.util.function.Tuples;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,10 @@ public class QueryService {
     private final EventDefinitionRepository eventDefinitionRepository;
     private final EventRepository eventRepository;
 
+    /**
+     * select all event definitions with <code>queryDateTime</code> in the past and create the events and attendees.
+     * @return All events that have been created.
+     */
     public Flux<EventEntity> processQueries() {
         return eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock))
                 .log()
@@ -38,6 +44,9 @@ public class QueryService {
                 .queryDateTime(eventDefinition.getQueryDateTime())
                 .startDateTime(eventDefinition.getStartDateTime())
                 .zoneId(eventDefinition.getZoneId())
+                .attendees(eventDefinition.getAttendeeDefinitions().stream()
+                        .map(EventAttendeeEntity::new)
+                        .collect(Collectors.toList()))
                 .build();
         updateToNextEventDefinition(eventDefinition);
         return Tuples.of(eventDefinition, event);
@@ -55,6 +64,8 @@ public class QueryService {
     private void updateToNextEventDefinition(EventDefinitionEntity eventDefinition) {
         if (eventDefinition.getInterval() != null) {
             calculateNextStartTime(eventDefinition);
+        } else {
+            eventDefinition.setActive(false);
         }
     }
 

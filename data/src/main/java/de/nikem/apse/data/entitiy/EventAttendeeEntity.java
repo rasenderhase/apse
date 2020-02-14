@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document("EventAttendee")
-public class EventAttendeeEntity {
+public class EventAttendeeEntity implements Cloneable {
     @Id
     private String id;
 
@@ -24,4 +24,12 @@ public class EventAttendeeEntity {
     private boolean active = true;
     @Builder.Default
     private AttendeeStatus attendeeStatus = AttendeeStatus.IDLE;
+
+    public EventAttendeeEntity(EventAttendeeEntity toCopy) {
+        id = toCopy.id;
+        firstName = toCopy.firstName;
+        email = toCopy.email;
+        active = toCopy.active;
+        attendeeStatus = toCopy.attendeeStatus;
+    }
 }
