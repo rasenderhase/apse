@@ -7,6 +7,7 @@ import de.nikem.apse.data.enums.AttendeeStatus;
 import de.nikem.apse.data.enums.EventStatus;
 import de.nikem.apse.data.repository.EventDefinitionRepository;
 import de.nikem.apse.data.repository.EventRepository;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
@@ -15,7 +16,6 @@ import reactor.core.publisher.Mono;
 import java.time.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -83,13 +83,16 @@ class QueryServiceTest {
     void processQueries() {
         final Flux<EventEntity> eventEntityFlux = queryService.processQueries();
         //Consume the Flux
-        Collection<EventEntity> events = eventEntityFlux.toStream().collect(Collectors.toList());
+        eventEntityFlux.subscribe();
 
         verify(eventDefinitionRepository).save(eventDefinitionEntity);
         assertThat(eventDefinitionEntity, hasProperty("eventName", is("Kick")));
+        assertThat(eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
 
-        verify(eventRepository).save(any());
-        assertThat(events, hasSize(1));
+        ArgumentCaptor<EventEntity> eventEntityArgumentCaptor = ArgumentCaptor.forClass(EventEntity.class);
+        verify(eventRepository).save(eventEntityArgumentCaptor.capture());
+        Collection<EventEntity> events = eventEntityArgumentCaptor.getAllValues();
+        assertThat("one event has been created", events, hasSize(1));
         EventEntity event = events.stream().findFirst().orElseThrow();
         assertThat(event, hasProperty("eventName", is("Kick")));
         assertThat(event, hasProperty("eventStatus", is(EventStatus.INVITATION)));
@@ -99,5 +102,50 @@ class QueryServiceTest {
         assertThat(attendees, hasSize(3));
         attendees.forEach(attendee -> assertThat(attendee, hasProperty("attendeeStatus", is(AttendeeStatus.IDLE))));
         assertThat("ben is an attendee", attendees.stream().anyMatch(a -> a.getEmail().equals("ben@knees.de")), is(true));
+    }
+
+    @org.junit.jupiter.api.Test
+    void processQueriesDecisionInThePast() {
+        // decision time of event definition is in the past -> no event must be created
+        eventDefinitionEntity.setDecisionDateTime(testLocalDateTime("2019-12-17T08:00:00.00Z"));
+
+        queryService.processQueries().subscribe();
+
+        assertThat("shift event definition to current date", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
+        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
+        verify(eventRepository, never()).save(any());
+    }
+
+    @org.junit.jupiter.api.Test
+    void processQueriesStartTimeFarInThePast() {
+        eventDefinitionEntity.setQueryDateTime(   testLocalDateTime("2019-12-10T08:00:00.00Z"));
+        eventDefinitionEntity.setDecisionDateTime(testLocalDateTime("2019-12-10T16:00:00.00Z"));
+        eventDefinitionEntity.setStartDateTime(   testLocalDateTime("2019-12-10T20:00:00.00Z"));
+
+        queryService.processQueries().subscribe();
+        assertThat("shift event definition to current date", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
+        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-17T16:00:00.00Z"))));
+        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-17T08:00:00.00Z"))));
+        // skip the event - as it's decision date is already in the past
+
+        queryService.processQueries().subscribe();
+        assertThat("shift event definition to next date", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat("shift event decision to next date", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
+        assertThat("shift event decision to next date", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
+        //for THIS, an event should be created
+
+        queryService.processQueries().subscribe();
+        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
+        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
+        //do not create event instances before query date.
+
+        ArgumentCaptor<EventEntity> eventEntityArgumentCaptor = ArgumentCaptor.forClass(EventEntity.class);
+        verify(eventRepository).save(eventEntityArgumentCaptor.capture());
+        Collection<EventEntity> events = eventEntityArgumentCaptor.getAllValues();
+        assertThat("one event has been created", events, hasSize(1));
+        EventEntity event = events.stream().findFirst().orElseThrow();
+        assertThat(event, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
     }
 }
