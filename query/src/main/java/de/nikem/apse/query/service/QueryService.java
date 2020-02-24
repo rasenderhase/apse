@@ -7,6 +7,8 @@ import de.nikem.apse.data.repository.EventDefinitionRepository;
 import de.nikem.apse.data.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,16 +24,22 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class QueryService {
+
     private final Clock clock;
     private final EventDefinitionRepository eventDefinitionRepository;
     private final EventRepository eventRepository;
+
+    @Scheduled(fixedRateString = "${apse.query.fixedDelay:60000}")
+    public void processQueries() {
+        createEvents().subscribe();
+    }
 
     /**
      * select all event definitions with <code>queryDateTime</code> in the past and create the events and attendees.
      *
      * @return All events that have been created.
      */
-    public Flux<EventEntity> processQueries() {
+    public Flux<EventEntity> createEvents() {
         return eventDefinitionRepository.findByQueryDateTimeBeforeAndActiveIsTrue(LocalDateTime.now(clock))
                 .log()
                 .map(this::createEvent)
@@ -40,33 +48,35 @@ public class QueryService {
     }
 
     private Tuple2<EventDefinitionEntity, Optional<EventEntity>> createEvent(EventDefinitionEntity eventDefinition) {
-        final Optional<EventEntity> event;
+        Optional<EventEntity> event = Optional.empty();
         final LocalDateTime now = LocalDateTime.now(clock);
-        log.debug("evaluate query date: \nnow           {}\nquery date    {}\ndecision date {}",
-                now, eventDefinition.getQueryDateTime(), eventDefinition.getDecisionDateTime());
-        if (eventDefinition.getQueryDateTime().isBefore(now)
-            && eventDefinition.getDecisionDateTime().isAfter(now)) {
-            log.info("create event for event definition id={}\nnow           {}\nquery date    {}\ndecision date {}",
-                    eventDefinition.getId(), now, eventDefinition.getQueryDateTime(), eventDefinition.getDecisionDateTime());
-            event = Optional.of(
-                    EventEntity.builder()
-                            .decisionDateTime(eventDefinition.getDecisionDateTime())
-                            .eventDefinitionId(eventDefinition.getId())
-                            .eventName(eventDefinition.getEventName())
-                            .minimumAttendees(eventDefinition.getMinimumAttendees())
-                            .queryDateTime(eventDefinition.getQueryDateTime())
-                            .startDateTime(eventDefinition.getStartDateTime())
-                            .zoneId(eventDefinition.getZoneId())
-                            .attendees(eventDefinition.getAttendeeDefinitions().stream()
-                                    .map(EventAttendeeEntity::new)
-                                    .collect(Collectors.toList()))
-                            .build()
-            );
-        } else {
-            log.debug("now is not after query date and before decision date - create nothing");
-            event = Optional.empty();
+        while (eventDefinition.getInterval() != null && eventDefinition.getQueryDateTime().isBefore(now)) {
+            log.debug("evaluate query date: \nnow           {}\nquery date    {}\ndecision date {}",
+                    now, eventDefinition.getQueryDateTime(), eventDefinition.getDecisionDateTime());
+            if (eventDefinition.getQueryDateTime().isBefore(now)
+                    && eventDefinition.getDecisionDateTime().isAfter(now)) {
+                log.info("create event for event definition id={}\nnow           {}\nquery date    {}\ndecision date {}",
+                        eventDefinition.getId(), now, eventDefinition.getQueryDateTime(), eventDefinition.getDecisionDateTime());
+                event = Optional.of(
+                        EventEntity.builder()
+                                .decisionDateTime(eventDefinition.getDecisionDateTime())
+                                .eventDefinitionId(eventDefinition.getId())
+                                .eventName(eventDefinition.getEventName())
+                                .minimumAttendees(eventDefinition.getMinimumAttendees())
+                                .queryDateTime(eventDefinition.getQueryDateTime())
+                                .startDateTime(eventDefinition.getStartDateTime())
+                                .zoneId(eventDefinition.getZoneId())
+                                .attendees(eventDefinition.getAttendeeDefinitions().stream()
+                                        .map(EventAttendeeEntity::new)
+                                        .collect(Collectors.toList()))
+                                .build()
+                );
+            } else {
+                log.debug("now is not after query date and before decision date - create nothing");
+                event = Optional.empty();
+            }
+            updateToNextEventDefinition(eventDefinition);
         }
-        updateToNextEventDefinition(eventDefinition);
         return Tuples.of(eventDefinition, event);
     }
 
