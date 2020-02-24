@@ -1,4 +1,4 @@
-package de.nikem.apse.main.service;
+package de.nikem.apse.query.service;
 
 import de.nikem.apse.data.entitiy.EventAttendeeEntity;
 import de.nikem.apse.data.entitiy.EventDefinitionEntity;

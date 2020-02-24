@@ -46,16 +46,12 @@ project(":notifier") {
     }
 }
 
-project(":demo") {
+project(":query") {
     dependencies {
         implementation project(":data")
-        implementation project(":notifier")
-        implementation project(":main")
 
         implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
         implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-        testImplementation 'io.projectreactor:reactor-test'
     }
 }
 
