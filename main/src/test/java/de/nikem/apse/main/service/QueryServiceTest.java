@@ -136,6 +136,8 @@ class QueryServiceTest {
         //for THIS, an event should be created
 
         queryService.processQueries().subscribe();
+        queryService.processQueries().subscribe();
+        queryService.processQueries().subscribe();
         assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
         assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
         assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
