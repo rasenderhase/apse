@@ -58,6 +58,7 @@ project(":query") {
 project(":main") {
     dependencies {
         implementation project(":data")
+        implementation project(":query")
 
         implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
