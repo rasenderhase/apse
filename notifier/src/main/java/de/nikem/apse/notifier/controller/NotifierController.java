@@ -16,7 +16,6 @@ public class NotifierController {
     @Scheduled(fixedRate = 60_000)
     public void schedule() {
         log.info("execute schedule");
-        notifierService.createEvents().subscribe(eventDefinitionEntity -> log.info("event {}", eventDefinitionEntity));
 
         notifierService.queryAttendees();
     }
