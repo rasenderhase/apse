@@ -150,4 +150,23 @@ class QueryServiceTest {
         EventEntity event = events.stream().findFirst().orElseThrow();
         assertThat(event, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
     }
+
+    @org.junit.jupiter.api.Test
+    void processQueriesSingleEvent() {
+        eventDefinitionEntity.setInterval(null);
+
+        queryService.createEvents().subscribe();
+
+        assertThat("single event has been deactivated.", eventDefinitionEntity, hasProperty("active", is(false)));
+    }
+
+    @org.junit.jupiter.api.Test
+    void processQueriesNotActiveEvent() {
+        eventDefinitionEntity.setActive(false);
+
+        queryService.createEvents().subscribe();
+
+        assertThat("event is still deactivated.", eventDefinitionEntity, hasProperty("active", is(false)));
+        verify(eventRepository, never()).save(any(EventEntity.class));
+    }
 }

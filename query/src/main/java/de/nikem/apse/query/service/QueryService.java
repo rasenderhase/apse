@@ -49,7 +49,7 @@ public class QueryService {
     private Tuple2<EventDefinitionEntity, Optional<EventEntity>> createEvent(EventDefinitionEntity eventDefinition) {
         Optional<EventEntity> event = Optional.empty();
         final LocalDateTime now = LocalDateTime.now(clock);
-        while (eventDefinition.getInterval() != null && eventDefinition.getQueryDateTime().isBefore(now)) {
+        while (eventDefinition.isActive() && eventDefinition.getQueryDateTime().isBefore(now)) {
             log.debug("evaluate query date: \nnow           {}\nquery date    {}\ndecision date {}",
                     now, eventDefinition.getQueryDateTime(), eventDefinition.getDecisionDateTime());
             if (eventDefinition.getQueryDateTime().isBefore(now)
