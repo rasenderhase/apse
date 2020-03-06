@@ -31,6 +31,10 @@ subprojects {
             exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
         }
     }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
 }
 
 project(":data") {
