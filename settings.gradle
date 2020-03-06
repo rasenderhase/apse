@@ -15,5 +15,6 @@ pluginManagement {
 include "main",
         "data",
         "query",
-        "notifier"
+        "notifier",
+        "test"
 rootProject.name="apse"

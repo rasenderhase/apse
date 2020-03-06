@@ -5,8 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Date;
 
 @Data
 @Builder
@@ -26,7 +29,7 @@ public class EventAttendeeEntity implements Cloneable {
     private AttendeeStatus attendeeStatus = AttendeeStatus.IDLE;
 
     public EventAttendeeEntity(EventAttendeeEntity toCopy) {
-        id = toCopy.id;
+        id = new ObjectId(new Date(), (int) (Math.random() * 16_777_215)).toString();
         firstName = toCopy.firstName;
         email = toCopy.email;
         active = toCopy.active;

@@ -13,10 +13,10 @@ public class NotifierController {
 
     private final NotifierService notifierService;
 
-    @Scheduled(fixedRate = 60_000)
+    @Scheduled(fixedRate = 60_000, initialDelay = 1000)
     public void schedule() {
         log.info("execute schedule");
 
-        notifierService.queryAttendees();
+        notifierService.queryAttendees().subscribe(aq -> log.debug("attendee query: {}", aq));
     }
 }

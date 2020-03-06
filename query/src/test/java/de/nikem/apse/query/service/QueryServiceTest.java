@@ -7,6 +7,7 @@ import de.nikem.apse.data.enums.AttendeeStatus;
 import de.nikem.apse.data.enums.EventStatus;
 import de.nikem.apse.data.repository.EventDefinitionRepository;
 import de.nikem.apse.data.repository.EventRepository;
+import de.nikem.apse.test.TestUtils;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -23,10 +24,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 class QueryServiceTest {
-
-    public static LocalDateTime testLocalDateTime(String text) {
-        return LocalDateTime.ofInstant(Instant.parse(text), ZoneId.of("Europe/Berlin"));
-    }
 
     private QueryService queryService;
 
@@ -45,15 +42,15 @@ class QueryServiceTest {
 
         eventDefinitionEntity = EventDefinitionEntity.builder()
                 .active(true)
-                .decisionDateTime(testLocalDateTime("2019-12-17T16:00:00.00Z"))
+                .decisionDateTime(TestUtils.testLocalDateTime("2019-12-17T16:00:00.00Z"))
                 .durationDecisionBeforeEvent(Duration.parse("PT4H"))
                 .durationQueryBeforeEvent(Duration.parse("PT12H"))
                 .eventName("Kick")
                 .id("1234")
                 .interval(Duration.parse("P7D"))
                 .minimumAttendees(2)
-                .queryDateTime(testLocalDateTime("2019-12-17T08:00:00.00Z"))
-                .startDateTime(testLocalDateTime("2019-12-17T20:00:00.00Z"))
+                .queryDateTime(TestUtils.testLocalDateTime("2019-12-17T08:00:00.00Z"))
+                .startDateTime(TestUtils.testLocalDateTime("2019-12-17T20:00:00.00Z"))
                 .zoneId(ZoneId.of("Europe/Berlin"))
                 .attendeeDefinitions(Arrays.asList(EventAttendeeEntity.builder()
                                 .active(true)
@@ -87,7 +84,7 @@ class QueryServiceTest {
 
         verify(eventDefinitionRepository).save(eventDefinitionEntity);
         assertThat(eventDefinitionEntity, hasProperty("eventName", is("Kick")));
-        assertThat(eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat(eventDefinitionEntity, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-24T20:00:00.00Z"))));
 
         ArgumentCaptor<EventEntity> eventEntityArgumentCaptor = ArgumentCaptor.forClass(EventEntity.class);
         verify(eventRepository).save(eventEntityArgumentCaptor.capture());
@@ -96,32 +93,33 @@ class QueryServiceTest {
         EventEntity event = events.stream().findFirst().orElseThrow();
         assertThat(event, hasProperty("eventName", is("Kick")));
         assertThat(event, hasProperty("eventStatus", is(EventStatus.INVITATION)));
-        assertThat(event, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
+        assertThat(event, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-17T20:00:00.00Z"))));
 
         final Collection<EventAttendeeEntity> attendees = event.getAttendees();
         assertThat(attendees, hasSize(3));
         attendees.forEach(attendee -> assertThat(attendee, hasProperty("attendeeStatus", is(AttendeeStatus.IDLE))));
+        attendees.forEach(attendee -> assertThat(attendee, hasProperty("id", is(notNullValue()))));
         assertThat("ben is an attendee", attendees.stream().anyMatch(a -> a.getEmail().equals("ben@knees.de")), is(true));
     }
 
     @org.junit.jupiter.api.Test
     void processQueriesDecisionInThePast() {
         // decision time of event definition is in the past -> no event must be created
-        eventDefinitionEntity.setDecisionDateTime(testLocalDateTime("2019-12-17T08:00:00.00Z"));
+        eventDefinitionEntity.setDecisionDateTime(TestUtils.testLocalDateTime("2019-12-17T08:00:00.00Z"));
 
         queryService.createEvents().subscribe();
 
-        assertThat("shift event definition to current date", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
-        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
-        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
+        assertThat("shift event definition to current date", eventDefinitionEntity, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("decisionDateTime", is(TestUtils.testLocalDateTime("2019-12-24T16:00:00.00Z"))));
+        assertThat("shift event decision to current date", eventDefinitionEntity, hasProperty("queryDateTime", is(TestUtils.testLocalDateTime("2019-12-24T08:00:00.00Z"))));
         verify(eventRepository, never()).save(any());
     }
 
     @org.junit.jupiter.api.Test
     void processQueriesStartTimeFarInThePast() {
-        eventDefinitionEntity.setQueryDateTime(   testLocalDateTime("2019-12-10T08:00:00.00Z"));
-        eventDefinitionEntity.setDecisionDateTime(testLocalDateTime("2019-12-10T16:00:00.00Z"));
-        eventDefinitionEntity.setStartDateTime(   testLocalDateTime("2019-12-10T20:00:00.00Z"));
+        eventDefinitionEntity.setQueryDateTime(   TestUtils.testLocalDateTime("2019-12-10T08:00:00.00Z"));
+        eventDefinitionEntity.setDecisionDateTime(TestUtils.testLocalDateTime("2019-12-10T16:00:00.00Z"));
+        eventDefinitionEntity.setStartDateTime(   TestUtils.testLocalDateTime("2019-12-10T20:00:00.00Z"));
 
         queryService.createEvents().subscribe();
         //assertThat("shift event definition to current date", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
@@ -130,17 +128,17 @@ class QueryServiceTest {
         // skip the event - as it's decision date is already in the past
 
         queryService.createEvents().subscribe();
-        assertThat("shift event definition to next date", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
-        assertThat("shift event decision to next date", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
-        assertThat("shift event decision to next date", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
+        assertThat("shift event definition to next date", eventDefinitionEntity, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat("shift event decision to next date", eventDefinitionEntity, hasProperty("decisionDateTime", is(TestUtils.testLocalDateTime("2019-12-24T16:00:00.00Z"))));
+        assertThat("shift event decision to next date", eventDefinitionEntity, hasProperty("queryDateTime", is(TestUtils.testLocalDateTime("2019-12-24T08:00:00.00Z"))));
         //for THIS, an event should be created
 
         queryService.createEvents().subscribe();
         queryService.createEvents().subscribe();
         queryService.createEvents().subscribe();
-        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("startDateTime", is(testLocalDateTime("2019-12-24T20:00:00.00Z"))));
-        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("decisionDateTime", is(testLocalDateTime("2019-12-24T16:00:00.00Z"))));
-        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("queryDateTime", is(testLocalDateTime("2019-12-24T08:00:00.00Z"))));
+        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-24T20:00:00.00Z"))));
+        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("decisionDateTime", is(TestUtils.testLocalDateTime("2019-12-24T16:00:00.00Z"))));
+        assertThat("nothing to be shifted any more", eventDefinitionEntity, hasProperty("queryDateTime", is(TestUtils.testLocalDateTime("2019-12-24T08:00:00.00Z"))));
         //do not create event instances before query date.
 
         ArgumentCaptor<EventEntity> eventEntityArgumentCaptor = ArgumentCaptor.forClass(EventEntity.class);
@@ -148,7 +146,7 @@ class QueryServiceTest {
         Collection<EventEntity> events = eventEntityArgumentCaptor.getAllValues();
         assertThat("one event has been created", events, hasSize(1));
         EventEntity event = events.stream().findFirst().orElseThrow();
-        assertThat(event, hasProperty("startDateTime", is(testLocalDateTime("2019-12-17T20:00:00.00Z"))));
+        assertThat(event, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-17T20:00:00.00Z"))));
     }
 
     @org.junit.jupiter.api.Test

@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 @Repository
 public interface EventRepository extends ReactiveCrudRepository<EventEntity, String> {
 
+    default Flux<EventEntity> findUnqueried(LocalDateTime now) {
+        return findUnqueried(now, EventStatus.INVITATION);
+    }
+
     @Query("{queryDateTime: {$lt: { $date : ?0}}, decisionDateTime: {$gt: { $date : ?0}}, eventStatus: ?1 }")
     Flux<EventEntity> findUnqueried(LocalDateTime now,
                                     EventStatus eventStatus);
