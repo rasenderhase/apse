@@ -30,6 +30,8 @@ class NotifierServiceTest {
     @Mock
     private EventRepository eventRepository;
     private Clock clock = Clock.fixed(Instant.parse("2019-12-17T08:03:00.00Z"), ZoneId.of("Europe/Berlin"));
+    @Mock
+    private ApseMailSender mailSender;
 
     private NotifierService notifierService;
 
@@ -66,7 +68,7 @@ class NotifierServiceTest {
         Mockito.when(eventRepository.findUnqueried(LocalDateTime.now(clock))).thenReturn(Flux.just(event));
         Mockito.when(eventRepository.save(event)).thenReturn(Mono.just(event));
 
-        notifierService = new NotifierService(eventRepository, clock);
+        notifierService = new NotifierService(eventRepository, clock, mailSender);
     }
 
     @Test

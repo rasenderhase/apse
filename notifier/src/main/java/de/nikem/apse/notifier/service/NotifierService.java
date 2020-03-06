@@ -3,7 +3,6 @@ package de.nikem.apse.notifier.service;
 import de.nikem.apse.data.entitiy.EventAttendeeEntity;
 import de.nikem.apse.data.entitiy.EventEntity;
 import de.nikem.apse.data.enums.AttendeeStatus;
-import de.nikem.apse.data.enums.EventStatus;
 import de.nikem.apse.data.repository.EventRepository;
 import de.nikem.apse.notifier.dto.AttendeeQuery;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 public class NotifierService {
     private final EventRepository eventRepository;
     private final Clock clock;
+    private final ApseMailSender mailSender;
 
     public Flux<? extends AttendeeQuery> queryAttendees() {
         return eventRepository.findUnqueried(LocalDateTime.now(clock))
@@ -61,6 +61,7 @@ public class NotifierService {
     }
 
     private AttendeeQuery sendNotifications(AttendeeQuery attendeeQuery) {
+        mailSender.sendQuery(attendeeQuery);
         return attendeeQuery;
     }
 }
