@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.time.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -95,11 +96,11 @@ class QueryServiceTest {
         assertThat(event, hasProperty("eventStatus", is(EventStatus.INVITATION)));
         assertThat(event, hasProperty("startDateTime", is(TestUtils.testLocalDateTime("2019-12-17T20:00:00.00Z"))));
 
-        final Collection<EventAttendeeEntity> attendees = event.getAttendees();
-        assertThat(attendees, hasSize(3));
-        attendees.forEach(attendee -> assertThat(attendee, hasProperty("attendeeStatus", is(AttendeeStatus.IDLE))));
-        attendees.forEach(attendee -> assertThat(attendee, hasProperty("id", is(notNullValue()))));
-        assertThat("ben is an attendee", attendees.stream().anyMatch(a -> a.getEmail().equals("ben@knees.de")), is(true));
+        final Map<String, EventAttendeeEntity> attendees = event.getAttendees();
+        assertThat(attendees.values(), hasSize(3));
+        attendees.values().forEach(attendee -> assertThat(attendee, hasProperty("attendeeStatus", is(AttendeeStatus.IDLE))));
+        attendees.values().forEach(attendee -> assertThat(attendee, hasProperty("id", is(notNullValue()))));
+        assertThat("ben is an attendee", attendees.values().stream().anyMatch(a -> a.getEmail().equals("ben@knees.de")), is(true));
     }
 
     @org.junit.jupiter.api.Test

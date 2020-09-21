@@ -33,7 +33,13 @@ public class ApseMailSender {
                 //"[ JA ] [nein]\n" +
                 "\n" +
                 "Gruß\n" +
-                "Dein Team");
+                "Dein Team\n" +
+                "\n" +
+                "Folgende Hygiene- und Schutzmaßnahmen sind zu beachten:\n" +
+                "-       Bitte benutzt den im Zugangsbereich befindlichen Desinfektionsspender zusätzlich steht in der Turnhalle ein weiteres Desinfektionsmittel zur Verfügung.\n" +
+                "-       In den Fluren und in den Kabinen ist ein Mund-Nasen-Schutz zu tragen.\n" +
+                "-       Die Anzahl der Personen in den Umkleidekabinen ist auf 2 Personen beschränkt. Wenn möglich, am besten direkt in Sportklamotten kommen.\n" +
+                "-       Die Kontaktdaten/Teilnehmerliste entnehmen wir den Rückmeldungen an Andi.");
         try {
             javaMailSender.send(message);
         } catch (Exception ex) {

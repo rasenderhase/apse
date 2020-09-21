@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static de.nikem.apse.test.TestUtils.testLocalDateTime;
@@ -63,7 +64,9 @@ class NotifierServiceTest {
                                 .id("2")
                                 .active(true)
                                 .email("ben@knees.de")
-                                .build()))
+                                .build())
+                .stream()
+                .collect(Collectors.toMap(EventAttendeeEntity::getId, Function.identity())))
                 .build();
         Mockito.when(eventRepository.findUnqueried(LocalDateTime.now(clock))).thenReturn(Flux.just(event));
         Mockito.when(eventRepository.save(event)).thenReturn(Mono.just(event));
@@ -74,7 +77,7 @@ class NotifierServiceTest {
     @Test
     void testQueryAnttendees() {
         final List<? extends AttendeeQuery> attendeeQueries = notifierService.queryAttendees().toStream().collect(Collectors.toList());
-        event.getAttendees().forEach(a -> assertThat(a, hasProperty("attendeeStatus", is(AttendeeStatus.INVITED))));
+        event.getAttendees().values().forEach(a -> assertThat(a, hasProperty("attendeeStatus", is(AttendeeStatus.INVITED))));
         assertThat(attendeeQueries, hasSize(2));
     }
 }

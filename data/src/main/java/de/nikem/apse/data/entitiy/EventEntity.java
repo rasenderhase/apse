@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Map;
 
 @Data
 @Builder
@@ -33,7 +34,7 @@ public class EventEntity {
 
     private int minimumAttendees;
 
-    private Collection<EventAttendeeEntity> attendees;
+    private Map<String, EventAttendeeEntity> attendees;
     @Builder.Default
     private EventStatus eventStatus = EventStatus.INVITATION;
 }

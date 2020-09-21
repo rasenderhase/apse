@@ -17,6 +17,7 @@ import reactor.util.function.Tuples;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -67,7 +68,7 @@ public class QueryService {
                                 .zoneId(eventDefinition.getZoneId())
                                 .attendees(eventDefinition.getAttendeeDefinitions().stream()
                                         .map(EventAttendeeEntity::new)
-                                        .collect(Collectors.toList()))
+                                        .collect(Collectors.toMap(EventAttendeeEntity::getId, Function.identity())))
                                 .build()
                 );
             } else {

@@ -25,6 +25,11 @@ public class NotifierService {
     private final Clock clock;
     private final ApseMailSender mailSender;
 
+    /**
+     * Find events that are ready to be queried and send notifications
+     * to all attendees that have not been notified, yet.
+     * @return Collection of queries
+     */
     public Flux<? extends AttendeeQuery> queryAttendees() {
         return eventRepository.findUnqueried(LocalDateTime.now(clock))
                 .log()
@@ -38,6 +43,7 @@ public class NotifierService {
 
     private Flux<? extends AttendeeQuery> findAndMarkAttendees(EventEntity eventEntity) {
         final List<EventAttendeeEntity> atendeesToInvite = eventEntity.getAttendees()
+                .values()
                 .stream()
                 .filter(EventAttendeeEntity::isActive)
                 .filter(eventAttendeeEntity -> eventAttendeeEntity.getAttendeeStatus() == AttendeeStatus.IDLE)
