@@ -54,3 +54,76 @@ It's specialized to
 3. else
     1. send cancellation message to all attendees
     2. update `eventStatus = CANCELLED`
+
+
+## Sample data
+
+### `EventDefinition`
+```
+{
+    "_id": {
+        "$oid": "5da38cb084c5a05b1865e4e4"
+    },
+    "eventName": "Test Event",
+    "startDateTime": {
+        "$date": "2020-09-21T09:51:30.000Z"
+    },
+    "interval": "PT4M",
+    "durationQueryBeforeEvent": "PT3M",
+    "durationDecisionBeforeEvent": "PT1M",
+    "queryDateTime": {
+        "$date": "2020-09-21T09:48:30.000Z"
+    },
+    "decisionDateTime": {
+        "$date": "2020-09-21T09:50:30.000Z"
+    },
+    "minimumAttendees": 1,
+    "active": true,
+    "attendeeDefinitions": [{
+        "firstName": "Andi",
+        "email": "andreas@knees.de",
+        "active": true,
+        "attendeeStatus": "IDLE"
+    }, {
+        "firstName": "Andreas",
+        "email": "andreas.nikem@googlemail.com",
+        "active": true,
+        "attendeeStatus": "IDLE"
+    }],
+    "_class": "de.nikem.apse.data.entitiy.EventDefinitionEntity"
+}
+```
+
+### `Event`
+```
+{
+    "_id": {
+        "$oid": "5e5450edc3dc4a078ef3d403"
+    },
+    "eventDefinitionId": "5da38cb084c5a05b1865e4e4",
+    "eventName": "Test Event",
+    "startDateTime": {
+        "$date": "2020-02-24T22:43:30.000Z"
+    },
+    "queryDateTime": {
+        "$date": "2020-02-24T22:40:30.000Z"
+    },
+    "decisionDateTime": {
+        "$date": "2020-02-24T22:42:30.000Z"
+    },
+    "minimumAttendees": 1,
+    "attendees": [{
+        "firstName": "Andi",
+        "email": "andreas@knees.de",
+        "active": true,
+        "attendeeStatus": "IDLE"
+    }, {
+        "firstName": "Andreas",
+        "email": "andreas.nikem@googlemail.com",
+        "active": true,
+        "attendeeStatus": "IDLE"
+    }],
+    "eventStatus": "INVITATION",
+    "_class": "de.nikem.apse.data.entitiy.EventEntity"
+}
+```
